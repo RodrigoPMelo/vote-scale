@@ -47,7 +47,7 @@ A arquitetura segue o padrão **Producer-Consumer** com desacoplamento via mensa
 
 1.  **Clone o repositório:**
     ```bash
-    git clone [https://github.com/sua-org/votescale.git](https://github.com/sua-org/votescale.git)
+    git clone https://github.com/RodrigoPMelo/vote-scale
     cd votescale
     ```
 
