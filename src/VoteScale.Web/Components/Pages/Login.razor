@@ -1,0 +1,59 @@
+﻿@page "/login"
+@using Microsoft.AspNetCore.Components.Authorization
+@using VoteScale.Web.Auth
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white text-center">
+                    <h4>🔒 Acesso Restrito</h4>
+                </div>
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger">@errorMessage</div>
+                    }
+
+                    <form @onsubmit="HandleLogin">
+                        <div class="mb-3">
+                            <label class="form-label">Usuário</label>
+                            <input class="form-control" @bind="username" placeholder="admin" autofocus />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Senha</label>
+                            <input type="password" class="form-control" @bind="password" placeholder="admin123" />
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            Entrar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string username = "";
+    private string password = "";
+    private string errorMessage = "";
+
+    private void HandleLogin()
+    {
+        if (username == "admin" && password == "admin123")
+        {
+            var customAuthProvider = (SimpleAuthProvider)AuthStateProvider;
+            customAuthProvider.Login(username);
+            
+            Nav.NavigateTo("/admin", true);
+        }
+        else
+        {
+            errorMessage = "Usuário ou senha inválidos.";
+        }
+    }
+}

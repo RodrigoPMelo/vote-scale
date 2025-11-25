@@ -1,0 +1,61 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using VoteScale.Web.Auth
+@inject AuthenticationStateProvider Auth
+@inject NavigationManager Navigation
+
+<nav class="navbar navbar-dark">
+    <div class="top-row ps-3 navbar-dark">
+        <a class="navbar-brand" href="">Vote Scale</a>
+
+        <button class="navbar-toggler" @onclick="@(() => ToggleNavMenu())"></button>
+    </div>
+
+    <div class="nav-scrollable @(collapseNavMenu ? "" : "open")">
+        <ul class="nav flex-column">
+
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
+                    <span class="bi bi-house-door-fill-nav-menu"></span> Home
+                </NavLink>
+            </li>
+
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="/admin">
+                    <span class="bi bi-list-nested-nav-menu"></span> Admin
+                </NavLink>
+            </li>
+
+            <li class="nav-item px-3">
+                <NavLink class="nav-link" href="/login" Match="NavLinkMatch.All">
+                    <span class="bi bi-plus-square-fill-nav-menu"></span> Login
+                </NavLink>
+            </li>
+
+            <li class="nav-item px-3">
+                <button class="nav-link logout-btn" @onclick="Logout">
+                    <span class="bi bi-box-arrow-right"></span> Logout
+                </button>
+            </li>
+
+        </ul>
+    </div>
+</nav>
+
+@code {
+    private bool collapseNavMenu = true;
+
+    private void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    private void Logout()
+    {
+        if (Auth is SimpleAuthProvider simple)
+        {
+            simple.Logout();
+        }
+
+        Navigation.NavigateTo("/login", true);
+    }
+}

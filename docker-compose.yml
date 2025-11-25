@@ -1,0 +1,84 @@
+﻿services:
+  # 1. Banco de Dados (PostgreSQL)
+  db:
+    image: postgres:16-alpine
+    container_name: votescale-db
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: votescale_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - votescale-network
+    restart: always
+
+  # 2. Mensageria (RabbitMQ com Painel de Gestão)
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: votescale-rabbitmq
+    ports:
+      - "5672:5672"      # Porta de comunicação interna
+      - "15672:15672"    # Porta do Painel Web (user: guest / pass: guest)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - votescale-network
+    restart: always
+
+  # 3. Aplicação Web (Frontend + API)
+  web:
+    image: votescale-web
+    container_name: votescale-web-app
+    build:
+      context: .
+      dockerfile: src/VoteScale.Web/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      # Configuração do RabbitMQ
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+      # Configuração do Banco (Postgres)
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=votescale_db;Username=admin;Password=password123;
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    depends_on:
+      - rabbitmq
+      - db
+    networks:
+      - votescale-network
+
+  # 4. Worker Service (Processamento em Background)
+  worker:
+    image: votescale-worker
+    container_name: votescale-worker-svc
+    build:
+      context: .
+      dockerfile: src/VoteScale.Worker/Dockerfile
+    environment:
+      - DOTNET_ENVIRONMENT=Development
+      # Configuração do RabbitMQ
+      - RabbitMQ__HostName=rabbitmq
+      - RabbitMQ__UserName=guest
+      - RabbitMQ__Password=guest
+      # Configuração do Banco (Postgres)
+      - ConnectionStrings__DefaultConnection=Host=db;Port=5432;Database=votescale_db;Username=admin;Password=password123;
+    depends_on:
+      - rabbitmq
+      - db
+    networks:
+      - votescale-network
+
+# Definição da rede interna
+networks:
+  votescale-network:
+    driver: bridge
+
+# Persistência de dados
+volumes:
+  postgres_data:

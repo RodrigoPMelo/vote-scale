@@ -1,0 +1,68 @@
+﻿@page "/"
+@using Microsoft.AspNetCore.Components.Web
+@inject IMessageBus MessageBus 
+
+
+<PageTitle>VoteScale - Eleições</PageTitle>
+
+<div class="container text-center mt-5">
+    <h1 class="display-4">VoteScale</h1>
+    <p class="lead mb-5">Sistema de votação de alta performance (.NET 9 + RabbitMQ)</p>
+
+    @if (votoConfirmado)
+    {
+        <div class="alert alert-success p-5 shadow">
+            <h2 class="alert-heading">Voto Recebido!</h2>
+            <p>Seu voto foi enviado para a fila de processamento com sucesso.</p>
+            <hr>
+            <button class="btn btn-success mt-3" @onclick="Reiniciar">Votar Novamente</button>
+        </div>
+    }
+    else
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title text-primary">Candidato Azul</h3>
+                        <p class="card-text">Defensor da Tecnologia .NET</p>
+                        <button class="btn btn-primary vote-btn btn-lg w-100" @onclick="() => Votar(10)">
+                            Votar no Azul
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <h3 class="card-title text-danger">Candidato Vermelho</h3>
+                        <p class="card-text">Defensor de Microserviços</p>
+                        <button class="btn btn-danger vote-btn btn-lg w-100" @onclick="() => Votar(20)">
+                            Votar no Vermelho
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool votoConfirmado = false;
+    private Guid surveyId = Guid.NewGuid(); 
+
+    private async Task Votar(int candidatoId)
+    {
+        var voto = Vote.Create(candidatoId, surveyId);
+
+        await MessageBus.PublishAsync(voto);
+
+        votoConfirmado = true;
+    }
+
+    private void Reiniciar()
+    {
+        votoConfirmado = false;
+    }
+}

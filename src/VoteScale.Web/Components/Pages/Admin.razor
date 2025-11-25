@@ -1,0 +1,95 @@
+﻿@page "/admin"
+@using Microsoft.AspNetCore.Authorization
+@using VoteScale.Domain.Interfaces
+@inject IVoteRepository Repository
+
+<PageTitle>Admin - Resultados</PageTitle>
+
+<div class="container mt-5">
+    <h2 class="mb-4">Resultados</h2>
+
+    <div class="row">
+        <!-- Card do Total -->
+        <div class="col-md-12 mb-4">
+            <div class="card bg-light">
+                <div class="card-body text-center">
+                    <h3 class="display-6">Total de Votos Computados</h3>
+                    <h1 class="display-1 fw-bold text-primary">@TotalVotos</h1>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabela Detalhada -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <span>Detalhamento por Candidato</span>
+                <button class="btn btn-sm btn-light" @onclick="CarregarResultados">
+                    🔄 Atualizar Agora
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            @if (resultados == null)
+            {
+                <p class="text-muted">Carregando dados...</p>
+            }
+            else if (!resultados.Any())
+            {
+                <p class="text-muted">Nenhum voto registrado ainda.</p>
+            }
+            else
+            {
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Candidato</th>
+                            <th>Votos</th>
+                            <th>Porcentagem</th>
+                            <th>Barra</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in resultados.OrderByDescending(x => x.Value))
+                        {
+                            var porcentagem = TotalVotos > 0 ? (double)item.Value / TotalVotos * 100 : 0;
+                            var cor = item.Key == 10 ? "bg-primary" : (item.Key == 20 ? "bg-danger" : "bg-warning");
+                            var nome = item.Key == 10 ? "Azul" : (item.Key == 20 ? "Vermelho" : "Amarelo");
+
+                            <tr>
+                                <td class="fw-bold">@nome (ID: @item.Key)</td>
+                                <td>@item.Value</td>
+                                <td>@porcentagem.ToString("F1")%</td>
+                                <td style="width: 40%">
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar @cor" role="progressbar" 
+                                             style="width: @porcentagem.ToString("0")%">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private Dictionary<int, int> resultados = new();
+    private int TotalVotos => resultados.Sum(x => x.Value);
+    private Guid surveyId = Guid.Parse("11111111-1111-1111-1111-111111111111"); 
+
+    protected override async Task OnInitializedAsync()
+    {
+       
+        await CarregarResultados();
+    }
+
+    private async Task CarregarResultados()
+    {
+        resultados = await Repository.GetResultsAsync(Guid.Empty); 
+    }
+}
