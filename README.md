@@ -6,6 +6,7 @@
 ![Plataforma](https://img.shields.io/badge/.NET-9.0-purple)
 ![Arquitetura](https://img.shields.io/badge/Architecture-Event_Driven-blue)
 ![Containers](https://img.shields.io/badge/Docker-Compose-green)
+![Tests](https://img.shields.io/badge/Tests-Passing-brightgreen)
 
 ## 📋 Visão Geral e Desafio de Negócio
 
@@ -15,7 +16,39 @@ Devido ao prazo curto e à equipe enxuta (5 desenvolvedores .NET), a solução p
 
 ## 🏗️ Arquitetura da Solução
 
-A arquitetura segue o padrão **Producer-Consumer** com desacoplamento via mensageria. O sistema é orquestrado via Docker em 4 containers distintos:
+A arquitetura segue o padrão **Producer-Consumer** com desacoplamento via mensageria. Abaixo, a visão dos containers orquestrados pelo Docker:
+
+```mermaid
+graph TD
+    subgraph DockerHost [Servidor Docker Host]
+        style DockerHost fill:#f9f9f9,stroke:#333,stroke-width:2px
+        
+        subgraph C_Web [Container: VoteScale.Web]
+            WebApp[VoteScale.Web.dll]
+        end
+
+        subgraph C_MQ [Container: RabbitMQ]
+            RabbitMQ(Message Broker)
+        end
+
+        subgraph C_Worker [Container: VoteScale.Worker]
+            WorkerApp[VoteScale.Worker.dll]
+        end
+
+        subgraph C_DB [Container: PostgreSQL]
+            DB[(Banco de Dados)]
+        end
+    end
+
+    %% Conexões de Rede
+    WebApp -- "Publica Evento (AMQP)" --> RabbitMQ
+    RabbitMQ -- "Consome Evento (AMQP)" --> WorkerApp
+    WorkerApp -- "INSERT (TCP/5432)" --> DB
+    WebApp -. "SELECT (TCP/5432)" .-> DB
+    
+    %% Acesso Externo
+    Usuario((Usuário)) -- "HTTPS / JSON" --> WebApp
+```
 
 1.  **VoteScale.Web (Frontend & API):**
     * *Responsabilidade:* Servir a interface Blazor e receber o voto via API.
@@ -26,6 +59,10 @@ A arquitetura segue o padrão **Producer-Consumer** com desacoplamento via mensa
     * *Responsabilidade:* Consome os votos da fila de forma controlada e persiste no banco de dados.
 4.  **PostgreSQL (Banco de Dados):**
     * *Responsabilidade:* Persistência relacional segura dos votos e definições das pesquisas.
+
+   ## 📘 Detalhamento Técnico
+   
+   Para visualizar o fluxo de mensagens (Diagrama de Sequência) e o grafo de dependências entre projetos, consulte o documento completo de arquitetura: [Diagramas de arquitetura](ARCHITECTURE.md)
 
 ## 🚀 Stack Tecnológica (.NET 9)
 
@@ -70,14 +107,31 @@ A solução adota uma pirâmide de testes focada na estabilidade:
 * **Testes de Integração:** Uso de *Testcontainers* para subir um Postgres descartável e testar o repositório do EF Core real.
 * **Testes de UI (bUnit):** Testes de componentes Blazor para garantir a usabilidade da interface de votação.
 
+   ### Executando os Testes Automatizados
+
+   O projeto conta com uma suíte de testes robusta cobrindo UI e Infraestrutura.
+   
+   1.  **Testes de Unidade e Integração (Backend & Banco):**
+       Utiliza *Testcontainers* para subir um PostgreSQL real e isolado.
+       ```bash
+       dotnet test src/VoteScale.Infrastructure.Tests
+       ```
+   
+   2.  **Testes de Componentes (Frontend/Blazor):**
+       Utiliza *bUnit* para simular interações do usuário em memória.
+       ```bash
+       dotnet test src/VoteScale.Web.Tests
+       ```
+
 ## 📝 Atendimento aos Requisitos
 
 Este projeto atende integralmente aos requisitos propostos:
 
-1.  **Serviços .NET:** Implementação de Web API e Worker Service (BackgroundService) nativos.
-2.  **Web ASP.NET:** Uso de Blazor para interfaces responsivas e modernas.
-3.  **Acesso a Dados:** Entity Framework Core gerenciando conexões e transações com Postgres.
-4.  **Integração:** Comunicação Back-end/Front-end via HTTP/REST e Back-end/Worker via Protocolo AMQP (RabbitMQ).
+- [x] **Arquitetura .NET:** Uso de *Worker Service* e *ASP.NET Core 9*.
+- [x] **Interface Web:** Implementada com *Blazor Server*.
+- [x] **Acesso a Dados:** *Entity Framework Core* com *PostgreSQL*.
+- [x] **Integração:** Mensageria assíncrona com *RabbitMQ*.
+- [x] **Qualidade:** Testes de Integração (*Testcontainers*) e Unitários (*bUnit*).
 
 ---
 *Arquitetura desenhada para alta performance e entrega contínua.*
