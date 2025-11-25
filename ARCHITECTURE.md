@@ -1,5 +1,7 @@
 # Diagramas de Arquitetura do Projeto (definições em andamento, não é versão final)  
 
+### Arquitetura em Camadas e Dependências: Este diagrama ilustra a aplicação estrita do princípio de inversão de dependência. A camada Web (Interface) e o Worker (Serviço) dependem apenas das abstrações definidas no Domain e das implementações concretas da Infrastructure. O Domain permanece puro, sem conhecimento de banco de dados ou frameworks externos, facilitando a testabilidade e a manutenção.  
+
 ``` mermaid
   graph TD
       %% Estilos para diferenciar as camadas
@@ -33,6 +35,7 @@
       %% Nota explicativa
       linkStyle 0,1,2,3,4 stroke-width:2px,fill:none,stroke:gray;
 ```
+### Fluxo de Votação Assíncrono (Event-Driven): Demonstração do padrão Fire-and-Forget. Para garantir alta disponibilidade sob tráfego massivo, a API não grava no banco diretamente. Ela delega a responsabilidade para o Message Broker (RabbitMQ) e responde imediatamente ao eleitor. O processamento pesado (persixtência SQL) ocorre em segundo plano, desacoplado da experiência do usuário.  
 
 ``` mermaid
 sequenceDiagram
@@ -67,7 +70,7 @@ sequenceDiagram
         deactivate Worker
     end
 ```  
-
+### Topologia de Implantação Containerizada: Visão física da infraestrutura isolada via Docker. Cada responsabilidade (Web, Worker, Banco e Mensageria) reside em seu próprio container, garantindo isolamento de recursos, facilidade de escalabilidade horizontal (podemos subir mais réplicas do Worker se necessário) e paridade entre os ambientes de desenvolvimento e produção.  
 
 ``` mermaid
 graph TD
@@ -100,4 +103,22 @@ graph TD
     %% Acesso Externo
     Usuario((Usuário)) -- "HTTPS / JSON" --> WebApp
 ```
+### Estratégia de Testes Automatizados (Visualização)  
 
+O diagrama abaixo ilustra como garantimos a qualidade do componente de dados (EF Core) isolando o ambiente via Testcontainers, sem sujar o banco de produção.  
+
+```mermaid
+graph LR
+    subgraph TestEnvironment [Ambiente de Testes Automatizados]
+        TestRunner[xUnit Test Runner]
+        
+        subgraph EphemeralInfra [Infraestrutura Descartável]
+            PgTest[(PostgreSQL - Testcontainers)]
+        end
+        
+        TestRunner -->|Instancia| Repo[VoteRepository]
+        Repo -->|Grava/Lê| PgTest
+    end
+    
+    style TestEnvironment fill:#f0f4c3,stroke:#827717,stroke-width:2px,stroke-dasharray: 5 5
+```
