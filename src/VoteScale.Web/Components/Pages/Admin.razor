@@ -1,4 +1,5 @@
-﻿@page "/admin"
+﻿@attribute [Authorize]
+@page "/admin"
 @using Microsoft.AspNetCore.Authorization
 @using VoteScale.Domain.Interfaces
 @inject IVoteRepository Repository

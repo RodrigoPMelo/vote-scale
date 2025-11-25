@@ -2,44 +2,43 @@
 @using VoteScale.Web.Auth
 @inject AuthenticationStateProvider Auth
 @inject NavigationManager Navigation
+@inject ToastService ToastService
 
 <nav class="navbar navbar-dark">
-    <div class="top-row ps-3 navbar-dark">
-        <a class="navbar-brand" href="">Vote Scale</a>
-
-        <button class="navbar-toggler" @onclick="@(() => ToggleNavMenu())"></button>
-    </div>
-
     <div class="nav-scrollable @(collapseNavMenu ? "" : "open")">
         <ul class="nav flex-column">
-
             <li class="nav-item px-3">
                 <NavLink class="nav-link" href="/" Match="NavLinkMatch.All">
                     <span class="bi bi-house-door-fill-nav-menu"></span> Home
                 </NavLink>
             </li>
 
-            <li class="nav-item px-3">
-                <NavLink class="nav-link" href="/admin">
-                    <span class="bi bi-list-nested-nav-menu"></span> Admin
-                </NavLink>
-            </li>
-
-            <li class="nav-item px-3">
-                <NavLink class="nav-link" href="/login" Match="NavLinkMatch.All">
-                    <span class="bi bi-plus-square-fill-nav-menu"></span> Login
-                </NavLink>
-            </li>
-
-            <li class="nav-item px-3">
-                <button class="nav-link logout-btn" @onclick="Logout">
-                    <span class="bi bi-box-arrow-right"></span> Logout
-                </button>
-            </li>
+            <AuthorizeView>
+                <Authorized>
+                    <li class="nav-item px-3">
+                        <NavLink class="nav-link" href="/admin">
+                            <span class="bi bi-list-nested-nav-menu"></span> Admin
+                        </NavLink>
+                    </li>
+                    <li class="nav-item px-3">
+                        <button class="nav-link logout-btn btn btn-link" @onclick="Logout">
+                            <span class="bi bi-box-arrow-right"></span> Logout
+                        </button>
+                    </li>
+                </Authorized>
+                <NotAuthorized>
+                    <li class="nav-item px-3">
+                        <NavLink class="nav-link" href="/login" Match="NavLinkMatch.All">
+                            <span class="bi bi-plus-square-fill-nav-menu"></span> Login
+                        </NavLink>
+                    </li>
+                </NotAuthorized>
+            </AuthorizeView>
 
         </ul>
     </div>
 </nav>
+
 
 @code {
     private bool collapseNavMenu = true;
@@ -55,7 +54,7 @@
         {
             simple.Logout();
         }
-
-        Navigation.NavigateTo("/login", true);
+        ToastService.ShowSuccess("Você saiu do sistema.");
+        Navigation.NavigateTo("/login");
     }
 }

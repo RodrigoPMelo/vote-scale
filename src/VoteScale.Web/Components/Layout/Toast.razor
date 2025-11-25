@@ -1,0 +1,53 @@
+﻿@inject ToastService ToastService
+@implements IDisposable
+
+@if (isVisible)
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1050">
+        <div class="toast show align-items-center text-white bg-@cssClass border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    @message
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" @onclick="Close"></button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool isVisible;
+    private string message = "";
+    private string cssClass = "primary";
+
+    protected override void OnInitialized()
+    {
+        ToastService.OnShow += ShowToast;
+    }
+
+    private void ShowToast(string msg, string type)
+    {
+        message = msg;
+        cssClass = type;
+        isVisible = true;
+        StateHasChanged();
+
+        var timer = new System.Timers.Timer(3000);
+        timer.Elapsed += (s, e) => { 
+            isVisible = false; 
+            InvokeAsync(StateHasChanged); 
+            timer.Dispose(); 
+        };
+        timer.Start();
+    }
+
+    private void Close()
+    {
+        isVisible = false;
+    }
+
+    public void Dispose()
+    {
+        ToastService.OnShow -= ShowToast;
+    }
+}

@@ -1,9 +1,10 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore; 
 using VoteScale.Infrastructure; 
 using VoteScale.Infrastructure.Persistence; 
-using VoteScale.Web.Components;
-using Microsoft.AspNetCore.Components.Authorization;
 using VoteScale.Web.Auth;
+using VoteScale.Web.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,9 +13,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddAuthorizationCore();
-
+builder.Services.AddScoped<ToastService>();
 builder.Services.AddScoped<AuthenticationStateProvider, SimpleAuthProvider>();
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/login"; // Redireciona para cá se tentar acessar sem permissão
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+    });
 builder.Services.AddCascadingAuthenticationState();
 
 builder.Services.AddInfrastructure(builder.Configuration);

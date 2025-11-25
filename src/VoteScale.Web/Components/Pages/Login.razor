@@ -3,6 +3,7 @@
 @using VoteScale.Web.Auth
 @inject AuthenticationStateProvider AuthStateProvider
 @inject NavigationManager Nav
+@inject ToastService ToastService
 
 <div class="container mt-5">
     <div class="row justify-content-center">
@@ -49,11 +50,13 @@
             var customAuthProvider = (SimpleAuthProvider)AuthStateProvider;
             customAuthProvider.Login(username);
             
-            Nav.NavigateTo("/admin", true);
+           ToastService.ShowSuccess("Login realizado com sucesso!");
+            
+            Nav.NavigateTo("/admin"); 
         }
         else
         {
-            errorMessage = "Usuário ou senha inválidos.";
+            ToastService.ShowError("Usuário ou senha inválidos.");
         }
     }
 }
